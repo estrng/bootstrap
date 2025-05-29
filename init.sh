@@ -2,7 +2,7 @@
 set -e
 
 # === CONFIGURAÇÕES ===
-CLI_VERSION="v1.0.5"
+CLI_VERSION="v1.0.6"
 REPO="estrng/estrngcli"
 BINARY_NAME="estrng"
 INSTALL_PATH="/usr/local/bin/$BINARY_NAME"
