@@ -1,0 +1,36 @@
+name: Update CLI Version in Bootstrap Scripts
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [cli-release-created]
+
+jobs:
+  update-bootstrap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout this repo
+        uses: actions/checkout@v3
+
+      - name: 🛠 Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: 🧪 Get latest release tag from Estrng CLI
+        run: |
+          TAG=$(curl -s https://api.github.com/repos/estrng/estrngcli/releases/latest | jq -r .tag_name)
+          echo "LATEST_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: ✏️ Update CLI_VERSION in init scripts
+        run: |
+          sed -i "s/^CLI_VERSION=\"v.*\"/CLI_VERSION=\"$LATEST_TAG\"/" init.sh
+          sed -i "s/^set \"VERSION=v.*\"/set \"VERSION=$LATEST_TAG\"/" init.bat
+          sed -i "s/release \`v.*\`/release \`$LATEST_TAG\`/" README.md
+
+      - name: 🚀 Commit and push
+        run: |
+          git add init.sh init.bat README.md
+          git commit -m "feat(auto): update CLI_VERSION to $LATEST_TAG"
+          git push
