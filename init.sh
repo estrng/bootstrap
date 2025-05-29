@@ -17,6 +17,6 @@ sudo mv "$FILE_NAME" "$INSTALL_DIR/$BINARY_NAME"
 
 echo "✅ Estrng CLI installed to $INSTALL_DIR/$BINARY_NAME"
 echo "🧪 Testing..."
-$BINARY_NAME --version || echo "⚠️ CLI was installed, but not detected in PATH"
+$BINARY_NAME || echo "⚠️ CLI was installed, but not detected in PATH"
 
 echo "✅ Done! You can now run 'estrng' from anywhere."
