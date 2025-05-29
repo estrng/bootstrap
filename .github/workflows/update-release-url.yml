@@ -30,6 +30,13 @@ jobs:
           sed -i "s/^set \"CLI_VERSION=v.*\"/set \"CLI_VERSION=$LATEST_TAG\"/" init.bat
           sed -i "s/release \`v.*\`/release \`$LATEST_TAG\`/" README.md
 
+      - name: 🏷️ Create tag for latest release
+        run: |
+          git config user.name "estrng"
+          git config user.email "${{ secrets.GH_EMAIL }}"
+          git tag -f "$LATEST_TAG"
+          git push --force "https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git" "$LATEST_TAG"
+
       - name: 🚀 Commit and push
         run: |
           git checkout main          
