@@ -1,20 +1,29 @@
 #!/usr/bin/env bash
 set -e
 
-# === CONFIGURAÇÕES ===
+# === CONFIGURATION ===
 CLI_VERSION="v1.0.6"
 REPO="estrng/estrngcli"
 BINARY_NAME="estrng"
 INSTALL_PATH="/usr/local/bin/$BINARY_NAME"
 
-# === VALIDAÇÃO DE TOKEN ===
+# === TOKEN VALIDATION ===
 if [[ -z "$GH_PAT" ]]; then
   echo "❌ GH_PAT environment variable is not set."
   echo "🔐 Export it before running: export GH_PAT=your_token"
   exit 1
 fi
 
-# === OBTÉM ID DO ASSET USANDO GITHUB API ===
+# === CHECK jq DEPENDENCY ===
+if ! command -v jq >/dev/null 2>&1; then
+  echo "❌ 'jq' is required but not installed."
+  echo "➡️  Please install jq and rerun this script."
+  echo "    For Debian/Ubuntu: sudo apt-get install jq"
+  echo "    For macOS (Homebrew): brew install jq"
+  exit 1
+fi
+
+# === GET ASSET ID USING GITHUB API ===
 echo "🔍 Fetching asset ID from GitHub API..."
 ASSET_ID=$(curl -s -H "Authorization: token $GH_PAT" \
   https://api.github.com/repos/$REPO/releases/tags/$CLI_VERSION |
@@ -25,7 +34,7 @@ if [[ -z "$ASSET_ID" || "$ASSET_ID" == "null" ]]; then
   exit 1
 fi
 
-# === DOWNLOAD DO BINÁRIO USANDO ASSET_ID ===
+# === DOWNLOAD Binary using ASSET_ID ===
 TMP_FILE=$(mktemp)
 echo "📦 Downloading $BINARY_NAME (asset ID: $ASSET_ID)..."
 
@@ -34,7 +43,7 @@ curl -L -H "Authorization: token $GH_PAT" \
   "https://api.github.com/repos/$REPO/releases/assets/$ASSET_ID" \
   -o "$TMP_FILE"
 
-# === VALIDAR BINÁRIO ===
+# === VALIDATE BINARY ===
 if file "$TMP_FILE" | grep -q "ELF"; then
   echo "🔐 Binary verified as ELF executable"
 else
@@ -45,16 +54,17 @@ else
   exit 1
 fi
 
-# === INSTALAÇÃO ===
+# === Installation ===
 echo "📁 Installing to $INSTALL_PATH..."
 sudo mv "$TMP_FILE" "$INSTALL_PATH"
 sudo chmod +x "$INSTALL_PATH"
 
-# === TESTE FINAL ===
+# === FINAL TEST ===
 echo "🧪 Testing installation..."
 "$INSTALL_PATH" || echo "⚠️ CLI was installed, but not detected in PATH"
+echo ""
 
-# === FINALIZAÇÃO ===
+# === FINALIZATION ===
 echo "✅ Done! Estrng CLI installed to $INSTALL_PATH"
 echo "🚀 You can now run '$BINARY_NAME' from anywhere."
 echo "🔗 More info: https://github.com/$REPO"
