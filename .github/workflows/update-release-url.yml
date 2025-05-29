@@ -17,6 +17,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git
 
       - name: 🧪 Get latest release tag from Estrng CLI
         run: |
@@ -30,7 +31,7 @@ jobs:
           sed -i "s/release \`v.*\`/release \`$LATEST_TAG\`/" README.md
 
       - name: 🚀 Commit and push
-        run: |
+        run: |          
           git add init.sh init.bat README.md
           git commit -m "feat(auto): update CLI_VERSION to $LATEST_TAG"
-          git push
+          git push origin main
