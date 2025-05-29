@@ -13,16 +13,16 @@ jobs:
       - name: 📥 Checkout this repo
         uses: actions/checkout@v3
 
-      - name: 🛠 Setup Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git
-
       - name: 🧪 Get latest release tag from Estrng CLI
         run: |
-          TAG=$(curl -s https://api.github.com/repos/estrng/estrngcli/releases/latest | jq -r .tag_name)
+          TAG=$(curl -s -H "Authorization: token ${{ secrets.GH_PAT }}" https://api.github.com/repos/estrng/estrngcli/releases/latest | jq -r .tag_name)
           echo "LATEST_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: ⛔️ Skip commit if LATEST_TAG is null
+        if: env.LATEST_TAG == 'null'
+        run: |
+          echo "❌ Latest tag is null. Skipping commit."
+          exit 0
 
       - name: ✏️ Update CLI_VERSION in init scripts
         run: |
@@ -31,7 +31,13 @@ jobs:
           sed -i "s/release \`v.*\`/release \`$LATEST_TAG\`/" README.md
 
       - name: 🚀 Commit and push
-        run: |          
+        run: |
+          git checkout main          
+          git config user.name "estrng"
+          git config user.email "${{ secrets.GH_EMAIL }}"
+          git remote -v
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git
+          git remote -v
           git add init.sh init.bat README.md
           git commit -m "feat(auto): update CLI_VERSION to $LATEST_TAG"
           git push origin main
