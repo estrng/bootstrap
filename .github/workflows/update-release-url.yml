@@ -27,7 +27,7 @@ jobs:
       - name: ✏️ Update CLI_VERSION in init scripts
         run: |
           sed -i "s/^CLI_VERSION=\"v.*\"/CLI_VERSION=\"$LATEST_TAG\"/" init.sh
-          sed -i "s/^set \"VERSION=v.*\"/set \"VERSION=$LATEST_TAG\"/" init.bat
+          sed -i "s/^set \"CLI_VERSION=v.*\"/set \"CLI_VERSION=$LATEST_TAG\"/" init.bat
           sed -i "s/release \`v.*\`/release \`$LATEST_TAG\`/" README.md
 
       - name: 🚀 Commit and push
