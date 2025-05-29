@@ -4,19 +4,19 @@ set -e
 CLI_VERSION="v1.0.5"
 REPO="estrng/estrngcli"
 BINARY_NAME="estrng"
-FILE_NAME="$BINARY_NAME"
-INSTALL_DIR="/usr/local/bin"
+TMP_FILE="./$BINARY_NAME.tmp"
+INSTALL_PATH="/usr/local/bin/$BINARY_NAME"
 
 echo "📦 Downloading Estrng CLI $CLI_VERSION for Linux/macOS..."
-curl -L "https://github.com/$REPO/releases/download/$CLI_VERSION/$FILE_NAME" -o "$FILE_NAME"
+curl -L "https://github.com/$REPO/releases/download/$CLI_VERSION/$BINARY_NAME" -o "$TMP_FILE"
+chmod +x "$TMP_FILE"
 
-chmod +x "$FILE_NAME"
+echo "📁 Moving binary to $INSTALL_PATH..."
+sudo mv "$TMP_FILE" "$INSTALL_PATH"
 
-echo "📁 Moving binary to $INSTALL_DIR..."
-sudo mv "$FILE_NAME" "$INSTALL_DIR/$BINARY_NAME"
-
-echo "✅ Estrng CLI installed to $INSTALL_DIR/$BINARY_NAME"
+echo "✅ Estrng CLI installed to $INSTALL_PATH"
 echo "🧪 Testing..."
 $BINARY_NAME || echo "⚠️ CLI was installed, but not detected in PATH"
 
 echo "✅ Done! You can now run 'estrng' from anywhere."
+echo "For more information, visit: https://github.com/$REPO"
