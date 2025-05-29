@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-CLI_VERSION="v1.0.4"
+CLI_VERSION="v1.0.5"
 REPO="estrng/estrngcli"
 BINARY_NAME="estrng"
 FILE_NAME="$BINARY_NAME"
