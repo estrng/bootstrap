@@ -16,7 +16,6 @@ jobs:
       - name: 🧪 Get latest release tag from Estrng CLI
         run: |
           TAG=$(curl -s -H "Authorization: token ${{ secrets.GH_PAT }}" https://api.github.com/repos/estrng/estrngcli/releases/latest | jq -r .tag_name)
-          echo "${{ secrets.GH_PAT }}"
           echo "LATEST_TAG=$TAG" >> $GITHUB_ENV
 
       - name: ⛔️ Skip commit if LATEST_TAG is null

@@ -14,13 +14,25 @@ if [[ -z "$GH_PAT" ]]; then
   exit 1
 fi
 
-# === DOWNLOAD BINÁRIO PARA LOCAL TEMPORÁRIO ===
-TMP_FILE=$(mktemp)
+# === OBTÉM ID DO ASSET USANDO GITHUB API ===
+echo "🔍 Fetching asset ID from GitHub API..."
+ASSET_ID=$(curl -s -H "Authorization: token $GH_PAT" \
+  https://api.github.com/repos/$REPO/releases/tags/$CLI_VERSION |
+  jq -r ".assets[] | select(.name == \"$BINARY_NAME\") | .id")
 
-echo "📦 Downloading $BINARY_NAME $CLI_VERSION..."
-curl -H "Authorization: token $GH_PAT" \
-     -L "https://github.com/$REPO/releases/download/$CLI_VERSION/$BINARY_NAME" \
-     -o "$TMP_FILE"
+if [[ -z "$ASSET_ID" || "$ASSET_ID" == "null" ]]; then
+  echo "❌ Asset '$BINARY_NAME' not found in release $CLI_VERSION"
+  exit 1
+fi
+
+# === DOWNLOAD DO BINÁRIO USANDO ASSET_ID ===
+TMP_FILE=$(mktemp)
+echo "📦 Downloading $BINARY_NAME (asset ID: $ASSET_ID)..."
+
+curl -L -H "Authorization: token $GH_PAT" \
+  -H "Accept: application/octet-stream" \
+  "https://api.github.com/repos/$REPO/releases/assets/$ASSET_ID" \
+  -o "$TMP_FILE"
 
 # === VALIDAR BINÁRIO ===
 if file "$TMP_FILE" | grep -q "ELF"; then
@@ -33,16 +45,16 @@ else
   exit 1
 fi
 
-# === MOVER PARA LOCAL DE INSTALAÇÃO ===
+# === INSTALAÇÃO ===
 echo "📁 Installing to $INSTALL_PATH..."
 sudo mv "$TMP_FILE" "$INSTALL_PATH"
 sudo chmod +x "$INSTALL_PATH"
 
 # === TESTE FINAL ===
 echo "🧪 Testing installation..."
-$INSTALL_PATH || echo "⚠️ CLI was installed, but not detected in PATH"
+"$INSTALL_PATH" || echo "⚠️ CLI was installed, but not detected in PATH"
 
 # === FINALIZAÇÃO ===
 echo "✅ Done! Estrng CLI installed to $INSTALL_PATH"
 echo "🚀 You can now run '$BINARY_NAME' from anywhere."
-echo "For more info, visit: https://github.com/$REPO"
+echo "🔗 More info: https://github.com/$REPO"
