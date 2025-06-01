@@ -1,6 +1,6 @@
 # Estrng CLI Bootstrap 🚀
 
-release v1.0.5
+release v1.0.6
 
 This repository helps install the private [estrng/estrngcli](https://github.com/estrng/estrngcli) on any machine quickly.
 
