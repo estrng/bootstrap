@@ -1,0 +1,40 @@
+name: Update EPY CLI Version in Bootstrap Scripts
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [cli-py-release-created]
+
+jobs:
+  update-bootstrap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout this repo
+        uses: actions/checkout@v3
+
+      - name: 🧪 Get latest release tag from Estrng EPY CLI
+        run: |
+          TAG=$(curl -s -H "Authorization: token ${{ secrets.GH_PAT }}" https://api.github.com/repos/estrng/estrng-epy/releases/latest | jq -r .tag_name)
+          echo "LATEST_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: ⛔️ Skip commit if LATEST_TAG is null
+        if: env.LATEST_TAG == 'null'
+        run: |
+          echo "❌ Latest tag is null. Skipping commit."
+          exit 0
+
+      - name: ✏️ Update CLI_VERSION in init-py.sh and README.md
+        run: |
+          sed -i "s/^CLI_VERSION=\"v.*\"/CLI_VERSION=\"$LATEST_TAG\"/" init-py.sh
+          sed -i "s/epy-release v.*/epy-release $LATEST_TAG/" README.md
+
+      - name: 🚀 Commit and push
+        run: |
+          git checkout main
+          git config user.name "estrng"
+          git config user.email "${{ secrets.GH_EMAIL }}"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git
+          git add init-py.sh README.md
+          git commit -m "feat(auto): update EPY CLI_VERSION to $LATEST_TAG"
+          git push "https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git" main

@@ -1,13 +1,20 @@
 # Estrng CLI Bootstrap 🚀
 
-release v1.0.6
+release v1.0.7
+epy-release v0.0.0
 
-This repository helps install the private [estrng/estrngcli](https://github.com/estrng/estrngcli) on any machine quickly.
+This repository helps install the private [estrng/estrngcli](https://github.com/estrng/estrngcli) and [estrng/estrng-py](https://github.com/estrng/estrng-py) on any machine quickly.
 
-## 🧪 Install (Linux/macOS)
+## 🧪 Install Estrng CLI (Linux/macOS)
 
 ```bash
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/estrng/bootstrap/main/init.sh)"
+```
+
+## 🧪 Install Estrng Python CLI (Linux/macOS)
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/estrng/bootstrap/main/init-py.sh)"
 ```
 
 ## 🧪 Install (Windows)
@@ -20,5 +27,4 @@ iwr -useb https://raw.githubusercontent.com/estrng/cli-bootstrap/main/init.bat |
 🛠 Requirements
 
   - cURL or PowerShell (preinstalled in most systems)
-
   - Internet access to download the binary from GitHub Releases
