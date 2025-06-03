@@ -3,7 +3,7 @@
 set -e
 
 # === CONFIGURATION ===
-CLI_VERSION="v1.0.0"
+CLI_VERSION="v1.0.2"
 REPO="estrng/estrng-epy"
 BINARY_NAME="epy"
 INSTALL_PATH="/usr/local/bin/$BINARY_NAME"
