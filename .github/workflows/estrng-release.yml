@@ -5,46 +5,53 @@ on:
   repository_dispatch:
     types: [cli-release-created]
 
+permissions:
+  contents: write
+
 jobs:
   update-bootstrap:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout this repo
-        uses: actions/checkout@v3
+      - name: Checkout this repo
+        uses: actions/checkout@v4
 
-      - name: 🧪 Get latest release tag from Estrng CLI
+      - name: Resolve version
+        id: version
         run: |
-          TAG=$(curl -s -H "Authorization: token ${{ secrets.GH_PAT }}" https://api.github.com/repos/estrng/estrngcli/releases/latest | jq -r .tag_name)
-          echo "LATEST_TAG=$TAG" >> $GITHUB_ENV
+          # Use version from dispatch payload, fallback to API for manual runs
+          VERSION="${{ github.event.client_payload.version }}"
+          if [[ -z "$VERSION" || "$VERSION" == "null" ]]; then
+            VERSION=$(curl -s -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+              https://api.github.com/repos/estrng/estrngcli/releases/latest | jq -r .tag_name)
+          fi
+          if [[ -z "$VERSION" || "$VERSION" == "null" ]]; then
+            echo "❌ Could not resolve a valid version tag. Aborting."
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "✅ Resolved version: $VERSION"
 
-      - name: ⛔️ Skip commit if LATEST_TAG is null
-        if: env.LATEST_TAG == 'null'
+      - name: Update CLI_VERSION in init scripts
         run: |
-          echo "❌ Latest tag is null. Skipping commit."
-          exit 0
+          VERSION=${{ steps.version.outputs.version }}
+          sed -i "s/^CLI_VERSION=\"v.*\"/CLI_VERSION=\"$VERSION\"/" init.sh
+          sed -i "s/^SET CLI_VERSION=v.*/SET CLI_VERSION=$VERSION/" init.bat
+          sed -i "s/release v[^ ]*/release $VERSION/" README.md
 
-      - name: ✏️ Update CLI_VERSION in init scripts
+      - name: Commit and push version bump
         run: |
-          sed -i "s/^CLI_VERSION=\"v.*\"/CLI_VERSION=\"$LATEST_TAG\"/" init.sh
-          sed -i "s/^SET CLI_VERSION=v.*/SET CLI_VERSION=$LATEST_TAG/" init.bat
-          sed -i "s/release v.*/release $LATEST_TAG/" README.md
-
-      - name: 🏷️ Create tag for latest release
-        run: |
-          git config user.name "estrng"
-          git config user.email "${{ secrets.GH_EMAIL }}"
-          git tag -f "$LATEST_TAG"
-          git push --force "https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git" "$LATEST_TAG"
-
-      - name: 🚀 Commit and push
-        run: |
-          git checkout main          
-          git config user.name "estrng"
-          git config user.email "${{ secrets.GH_EMAIL }}"
-          git remote -v
+          VERSION=${{ steps.version.outputs.version }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git
-          git remote -v
           git add init.sh init.bat README.md
-          git commit -m "feat(auto): update CLI_VERSION to $LATEST_TAG"
-          git push "https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git" main
+          git diff --staged --quiet && echo "No changes to commit" && exit 0
+          git commit -m "feat(auto): update CLI_VERSION to $VERSION"
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          git tag -f "$VERSION"
+          git push --force origin "$VERSION"
