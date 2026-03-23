@@ -17,15 +17,33 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/estrng/bootstrap/main/in
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/estrng/bootstrap/main/init-py.sh)"
 ```
 
-## 🧪 Install (Windows)
+## 🧪 Install Estrng CLI (Windows)
 
-Open CMD or PowerShell and run:
+A GitHub Personal Access Token (PAT) with access to `estrng/estrngcli` is required.
 
-```pws
-iwr -useb https://raw.githubusercontent.com/estrng/bootstrap/main/init.bat | iex
+**Option 1 — Run directly without saving the file:**
+
+```powershell
+$env:GH_PAT = "your_token_here"
+iex (iwr -Uri "https://raw.githubusercontent.com/estrng/bootstrap/main/init.ps1" -UseBasicParsing -Headers @{ Authorization = "token $env:GH_PAT" }).Content
 ```
 
-🛠 Requirements
+**Option 2 — Download first, then run:**
+
+```powershell
+# 1. Download
+iwr -Uri "https://raw.githubusercontent.com/estrng/bootstrap/main/init.ps1" `
+    -Headers @{ Authorization = "token YOUR_PAT" } `
+    -OutFile "$env:TEMP\init.ps1" -UseBasicParsing
+
+# 2. Run
+powershell -ExecutionPolicy Bypass -File "$env:TEMP\init.ps1" -GH_PAT "YOUR_PAT"
+```
+
+After installation completes, **restart your terminal** and run `estrng help` to verify.
+
+## 🛠 Requirements
 
 - cURL or PowerShell (preinstalled in most systems)
 - Internet access to download the binary from GitHub Releases
+- A GitHub PAT with read access to the private `estrng/estrngcli` repository (Windows only)

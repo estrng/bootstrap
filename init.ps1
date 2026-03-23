@@ -39,30 +39,48 @@ if (-not (Test-Path $INSTALL_DIR)) {
 
 Write-Host "Downloading $BINARY_NAME (asset ID: $($asset.id))..."
 $assetApiUrl = "https://api.github.com/repos/$REPO/releases/assets/$($asset.id)"
-$downloadHeaders = @{
-    Authorization = "token $GH_PAT"
-    Accept        = "application/octet-stream"
+Write-Host "[DEBUG] Step 1: GET $assetApiUrl (AllowAutoRedirect=false)"
+
+$httpReq = [System.Net.HttpWebRequest]::CreateHttp($assetApiUrl)
+$httpReq.Headers.Add("Authorization", "token $GH_PAT")
+$httpReq.Accept = "application/octet-stream"
+$httpReq.AllowAutoRedirect = $false
+$httpReq.UserAgent = "PowerShell"
+
+$httpResp = $httpReq.GetResponse()
+Write-Host "[DEBUG] Step 1 response: HTTP $([int]$httpResp.StatusCode) $($httpResp.StatusDescription)"
+Write-Host "[DEBUG] Content-Type: $($httpResp.ContentType)"
+$directUrl = $httpResp.Headers["Location"]
+Write-Host "[DEBUG] Location header: $(if ($directUrl) { $directUrl.Substring(0, [Math]::Min(80, $directUrl.Length)) + '...' } else { '(none)' })"
+$httpResp.Close()
+
+if (-not $directUrl) {
+    Write-Error "GitHub did not return a redirect URL for the asset. Check your PAT permissions."
+    exit 1
 }
 
-$redirectResponse = Invoke-WebRequest -Uri $assetApiUrl -Headers $downloadHeaders `
-    -MaximumRedirection 0 -UseBasicParsing -ErrorAction SilentlyContinue
-
-if ($redirectResponse.StatusCode -in @(301, 302, 303, 307, 308)) {
-    $directUrl = $redirectResponse.Headers["Location"]
-    Invoke-WebRequest -Uri $directUrl -OutFile $INSTALL_PATH -UseBasicParsing
-} else {
-    Invoke-WebRequest -Uri $assetApiUrl -Headers $downloadHeaders -OutFile $INSTALL_PATH -UseBasicParsing
-}
+Write-Host "[DEBUG] Step 2: Downloading from S3 pre-signed URL (no auth headers)..."
+$wc = New-Object System.Net.WebClient
+$wc.DownloadFile($directUrl, $INSTALL_PATH)
+$wc.Dispose()
 
 if (-not (Test-Path $INSTALL_PATH)) {
     Write-Error "Download failed."
     exit 1
 }
 
+$fileSize = (Get-Item $INSTALL_PATH).Length
 $fileBytes = [System.IO.File]::ReadAllBytes($INSTALL_PATH)
+Write-Host "[DEBUG] Downloaded file size: $fileSize bytes"
+Write-Host "[DEBUG] First 4 bytes (hex): $($fileBytes[0].ToString('X2')) $($fileBytes[1].ToString('X2')) $($fileBytes[2].ToString('X2')) $($fileBytes[3].ToString('X2'))"
+
 if ($fileBytes[0] -ne 0x4D -or $fileBytes[1] -ne 0x5A) {
+    $previewLength = [Math]::Min(500, $fileSize)
+    $textPreview = [System.Text.Encoding]::UTF8.GetString($fileBytes, 0, $previewLength)
+    Write-Host "[DEBUG] File content preview (first 500 bytes as UTF-8):"
+    Write-Host $textPreview
     Remove-Item $INSTALL_PATH -Force
-    Write-Error "Downloaded file is not a valid Windows executable. Verify your GH_PAT has access to '$REPO' and that '$BINARY_NAME' exists in release $CLI_VERSION."
+    Write-Error "Downloaded file is not a valid Windows executable (expected MZ header)."
     exit 1
 }
 
