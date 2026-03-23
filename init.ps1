@@ -42,11 +42,18 @@ $downloadHeaders = @{
     Authorization = "token $GH_PAT"
     Accept        = "application/octet-stream"
 }
-Invoke-RestMethod -Uri "https://api.github.com/repos/$REPO/releases/assets/$($asset.id)" `
+Invoke-WebRequest -Uri "https://api.github.com/repos/$REPO/releases/assets/$($asset.id)" `
     -Headers $downloadHeaders -OutFile $INSTALL_PATH
 
 if (-not (Test-Path $INSTALL_PATH)) {
     Write-Error "Download failed."
+    exit 1
+}
+
+$fileBytes = [System.IO.File]::ReadAllBytes($INSTALL_PATH)
+if ($fileBytes[0] -ne 0x4D -or $fileBytes[1] -ne 0x5A) {
+    Remove-Item $INSTALL_PATH -Force
+    Write-Error "Downloaded file is not a valid Windows executable. Verify your GH_PAT has access to '$REPO' and that '$BINARY_NAME' exists in release $CLI_VERSION."
     exit 1
 }
 
@@ -56,6 +63,16 @@ $currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
 if ($currentPath -notlike "*$INSTALL_DIR*") {
     [Environment]::SetEnvironmentVariable("PATH", "$currentPath;$INSTALL_DIR", "User")
     Write-Host "Added $INSTALL_DIR to your PATH permanently."
+}
+
+Write-Host ""
+Write-Host "Verifying installation..."
+try {
+    $output = & $INSTALL_PATH help 2>&1
+    Write-Host "OK: $output"
+} catch {
+    Write-Error "Installation verification failed. The binary did not execute successfully: $_"
+    exit 1
 }
 
 Write-Host ""
