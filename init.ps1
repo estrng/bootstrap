@@ -45,13 +45,13 @@ $downloadHeaders = @{
 }
 
 $redirectResponse = Invoke-WebRequest -Uri $assetApiUrl -Headers $downloadHeaders `
-    -MaximumRedirection 0 -ErrorAction SilentlyContinue
+    -MaximumRedirection 0 -UseBasicParsing -ErrorAction SilentlyContinue
 
 if ($redirectResponse.StatusCode -in @(301, 302, 303, 307, 308)) {
-    $directUrl = $redirectResponse.Headers.Location
-    Invoke-WebRequest -Uri $directUrl -OutFile $INSTALL_PATH
+    $directUrl = $redirectResponse.Headers["Location"]
+    Invoke-WebRequest -Uri $directUrl -OutFile $INSTALL_PATH -UseBasicParsing
 } else {
-    Invoke-WebRequest -Uri $assetApiUrl -Headers $downloadHeaders -OutFile $INSTALL_PATH
+    Invoke-WebRequest -Uri $assetApiUrl -Headers $downloadHeaders -OutFile $INSTALL_PATH -UseBasicParsing
 }
 
 if (-not (Test-Path $INSTALL_PATH)) {
