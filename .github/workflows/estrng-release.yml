@@ -35,7 +35,6 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.version }}
           sed -i "s/^CLI_VERSION=\"v.*\"/CLI_VERSION=\"$VERSION\"/" init.sh
-          sed -i "s/^SET CLI_VERSION=v.*/SET CLI_VERSION=$VERSION/" init.bat
           sed -i 's/\$CLI_VERSION  = "v[^"]*"/$CLI_VERSION  = "'"$VERSION"'"/' init.ps1
           sed -i "s/release v[^ ]*/release $VERSION/" README.md
 
@@ -45,7 +44,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/estrng/bootstrap.git
-          git add init.sh init.bat init.ps1 README.md
+          git add init.sh init.ps1 README.md
           git diff --staged --quiet && echo "No changes to commit" && exit 0
           git commit -m "feat(auto): update CLI_VERSION to $VERSION"
           git push origin main
