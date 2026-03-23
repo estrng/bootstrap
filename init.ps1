@@ -8,7 +8,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$CLI_VERSION = "v1.1.0"
+$CLI_VERSION = "v1.1.1"
 $REPO        = "estrng/estrngcli"
 $BINARY_NAME = "estrng.exe"
 $INSTALL_DIR = "$env:USERPROFILE\estrngcli"
@@ -38,12 +38,21 @@ if (-not (Test-Path $INSTALL_DIR)) {
 }
 
 Write-Host "Downloading $BINARY_NAME (asset ID: $($asset.id))..."
+$assetApiUrl = "https://api.github.com/repos/$REPO/releases/assets/$($asset.id)"
 $downloadHeaders = @{
     Authorization = "token $GH_PAT"
     Accept        = "application/octet-stream"
 }
-Invoke-WebRequest -Uri "https://api.github.com/repos/$REPO/releases/assets/$($asset.id)" `
-    -Headers $downloadHeaders -OutFile $INSTALL_PATH
+
+$redirectResponse = Invoke-WebRequest -Uri $assetApiUrl -Headers $downloadHeaders `
+    -MaximumRedirection 0 -ErrorAction SilentlyContinue
+
+if ($redirectResponse.StatusCode -in @(301, 302, 303, 307, 308)) {
+    $directUrl = $redirectResponse.Headers.Location
+    Invoke-WebRequest -Uri $directUrl -OutFile $INSTALL_PATH
+} else {
+    Invoke-WebRequest -Uri $assetApiUrl -Headers $downloadHeaders -OutFile $INSTALL_PATH
+}
 
 if (-not (Test-Path $INSTALL_PATH)) {
     Write-Error "Download failed."
