@@ -1,7 +1,7 @@
 # Estrng CLI Bootstrap 🚀
 
-release v1.1.2
-epy-release v1.1.2
+release v1.1.3
+epy-release v1.1.3
 
 This repository helps install the private [estrng/estrngcli](https://github.com/estrng/estrngcli) and [estrng/estrng-py](https://github.com/estrng/estrng-py) on any machine quickly.
 

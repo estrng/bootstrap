@@ -8,7 +8,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$CLI_VERSION  = "v1.1.2"
+$CLI_VERSION  = "v1.1.3"
 $REPO         = "estrng/estrngcli"
 $ASSET_NAME   = "estrng-windows-x64.exe"
 $BINARY_NAME  = "estrng.exe"
